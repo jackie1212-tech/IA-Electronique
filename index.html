@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ElectroIA Pro — Jean Jackie</title>
+<style>
+  :root {
+    --bg: #0b111a;
+    --panel: #131c2b;
+    --panel2: #1a2639;
+    --border: #26364f;
+    --accent: #00d2ff;
+    --accent2: #00a884;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+  .app { display: flex; flex-direction: column; height: 100dvh; max-width: 720px; margin: 0 auto; background: var(--bg); }
+
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--panel); border-bottom: 1px solid var(--border); gap: 8px; }
+  .profile { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .avatar-wrap { position: relative; width: 46px; height: 46px; flex-shrink: 0; cursor: pointer; }
+  .avatar-wrap img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); display: block; }
+  .avatar-badge { position: absolute; bottom: -2px; right: -2px; background: var(--accent); color: #000; font-size: 11px; font-weight: 700; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--bg); }
+  .title-box { min-width: 0; }
+  .title-box h1 { font-size: 16px; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .title-box p { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .top-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex-shrink: 0; }
+  .top-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel2); color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .top-btn.ok { border-color: #10b981; color: #34d399; }
+  .top-btn.warn { border-color: var(--warn); color: #fbbf24; }
+  .top-btn.voice-on { border-color: var(--accent); color: var(--accent); }
+  .top-row-mini { display: flex; gap: 4px; }
+  .top-row-mini .top-btn { flex: 1; padding: 5px 6px; }
+
+  .api-bar { display: flex; gap: 6px; padding: 8px 12px; background: #0f1724; border-bottom: 1px solid var(--border); }
+  .api-bar.hidden { display: none; }
+  .api-bar input { flex: 1; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-size: 13px; outline: none; }
+  .api-bar button { background: var(--accent2); color: #fff; border: none; border-radius: 8px; padding: 0 14px; font-weight: 700; font-size: 13px; cursor: pointer; }
+
+  .tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); }
+  .tab { flex: 1; padding: 9px 6px; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0, 210, 255, 0.05); }
+
+  .chips { display: flex; gap: 6px; padding: 8px 10px; overflow-x: auto; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 16px; font-size: 12px; white-space: nowrap; cursor: pointer; }
+
+  .view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .view.hidden { display: none; }
+  .messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 88%; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.48; word-wrap: break-word; }
+  .msg.ai { align-self: flex-start; background: var(--panel2); border: 1px solid var(--border); }
+  .msg.user { align-self: flex-end; background: #0284c7; color: #fff; }
+  .msg img.preview { max-width: 100%; max-height: 190px; border-radius: 8px; margin-bottom: 6px; display: block; }
+  .msg a { color: #38bdf8; text-decoration: underline; }
+  .msg-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .msg-actions button { background: var(--panel); border: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+
+  .pending-img { display: none; align-items: center; gap: 8px; padding: 6px 12px; background: var(--panel2); border-top: 1px solid var(--border); font-size: 12px; }
+  .pending-img.show { display: flex; }
+  .pending-img img { width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid var(--accent); }
+  .pending-img button { margin-left: auto; background: var(--danger); color: #fff; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+
+  .status { padding: 4px 12px; font-size: 11px; color: var(--accent); background: #0d1522; min-height: 22px; }
+
+  .input-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--panel); border-top: 1px solid var(--border); }
+  .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel2); color: var(--text); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .icon-btn.recording { background: var(--danger); border-color: #fca5a5; color: #fff; animation: pulse 1s infinite; }
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+  .input-bar input[type="text"] { flex: 1; min-width: 0; height: 40px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel2); color: var(--text); padding: 0 14px; font-size: 14px; outline: none; }
+  .send-btn { height: 40px; padding: 0 14px; border-radius: 20px; border: none; background: var(--accent); color: #041019; font-weight: 700; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+
+  .lab { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .card h3 { font-size: 14px; color: var(--accent); margin-bottom: 8px; }
+  .row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .card select, .card input { flex: 1; min-width: 70px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel2); color: var(--text); font-size: 13px; }
+  .card button { background: var(--accent2); color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .res-box { padding: 8px; background: var(--panel2); border-radius: 8px; font-size: 13px; color: #34d399; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="profile">
+      <div class="avatar-wrap" id="avatarWrap" title="Changer la photo">
+        <img id="avatarImg" alt="Jean Jackie">
+        <span class="avatar-badge">+</span>
+      </div>
+      <div class="title-box">
+        <h1>ElectroIA Pro ⚡</h1>
+        <p>Salama, Jean Jackie</p>
+      </div>
+    </div>
+    <div class="top-grid">
+      <button type="button" id="keyToggleBtn" class="top-btn warn">🔑 Clé API</button>
+      <a href="https://www.alldatasheet.com" target="_blank" rel="noopener" class="top-btn">📘 Datasheet</a>
+      <button type="button" id="voiceBtn" class="top-btn voice-on">🔊 Voix</button>
+      <div class="top-row-mini">
+        <button type="button" id="pdfAllBtn" class="top-btn">📥 PDF</button>
+        <button type="button" id="clearBtn" class="top-btn">🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="api-bar" id="apiBar">
+    <input type="password" id="apiKeyInput" placeholder="Colle ta clé API Groq (gsk_...)">
+    <button type="button" id="saveKeyBtn">Valider</button>
+  </div>
+
+  <div class="tabs">
+    <button type="button" class="tab active" id="tabChat">🎙️ Assistant IA &amp; Caméra</button>
+    <button type="button" class="tab" id="tabLab">🛠️ Outils Labo</button>
+  </div>
+
+  <div class="view" id="viewChat">
+    <div class="chips">
+      <button type="button" class="chip" data-prompt="Donne le brochage (pinout) détaillé de ce composant : ">📌 Brochage (Pinout)</button>
+      <button type="button" class="chip" data-prompt="Comment tester ce composant étape par étape au multimètre ? ">📟 Test Multimètre</button>
+      <button type="button" class="chip" data-prompt="Quels sont les composants équivalents compatibles pour : ">🔄 Équivalent</button>
+      <button type="button" class="chip" data-prompt="Explique le fonctionnement et le schéma de câblage typique de : ">⚡ Schéma type</button>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="pending-img" id="pendingImgBar">
+      <img id="pendingImgPreview" alt="Composant">
+      <span>Photo prête à analyser</span>
+      <button type="button" id="removeImgBtn">Retirer</button>
+    </div>
+
+    <div class="status" id="statusBar">Prêt — ElectroIA Pro</div>
+
+    <div class="input-bar">
+      <button type="button" class="icon-btn" id="camBtn" title="Photo composant">📷</button>
+      <button type="button" class="icon-btn" id="micBtn" title="Parler">🎙️</button>
+      <input type="text" id="userInput" placeholder="Question électronique...">
+      <button type="button" class="send-btn" id="sendBtn">Envoyer ➤</button>
+    </div>
+  </div>
+
+  <div class="view hidden" id="viewLab">
+    <div class="lab">
+      <div class="card">
+        <h3>🎨 Code Couleur Résistance (4 anneaux)</h3>
+        <div class="row">
+          <select id="b1">
+            <option value="1" selected>Marron (1)</option>
+            <option value="2">Rouge (2)</option>
+            <option value="3">Orange (3)</option>
+            <option value="4">Jaune (4)</option>
+            <option value="5">Vert (5)</option>
+            <option value="6">Bleu (6)</option>
+            <option value="7">Violet (7)</option>
+            <option value="8">Gris (8)</option>
+            <option value="9">Blanc (9)</option>
+          </select>
+          <select id="b2">
+            <option value="0" selected>Noir (0)</option>
+            <option value="1">Marron (1)</option>
+            <option value="2">Rouge (2)</option>
+            <option value="3">Orange (3)</option>
+            <option value="4">Jaune (4)</option>
+            <option value="5">Vert (5)</option>
+            <option value="6">Bleu (6)</option>
+            <option value="7">Violet (7)</option>
+            <option value="8">Gris (8)</option>
+            <option value="9">Blanc (9)</option>
+          </select>
+          <select id="b3">
+            <option value="1">Noir (×1 Ω)</option>
+            <option value="10">Marron (×10 Ω)</option>
+            <option value="100" selected>Rouge (×100 Ω)</option>
+            <option value="1000">Orange (×1 kΩ)</option>
+            <option value="10000">Jaune (×10 kΩ)</option>
+            <option value="100000">Vert (×100 kΩ)</option>
+            <option value="1000000">Bleu (×1 MΩ)</option>
+            <option value="0.1">Or (×0.1 Ω)</option>
+          </select>
+          <select id="b4">
+            <option value="±5%" selected>Or (±5%)</option>
+            <option value="±1%">Marron (±1%)</option>
+            <option value="±2%">Rouge (±2%)</option>
+            <option value="±10%">Argent (±10%)</option>
+          </select>
+        </div>
+        <div class="res-box" id="resResult">Valeur : 1 kΩ ±5%</div>
+        <button type="button" id="askResBtn">Demander à l'IA l'usage de cette résistance</button>
+      </div>
+
+      <div class="card">
+        <h3>⚡ Loi d'Ohm &amp; Puissance</h3>
+        <div class="row">
+          <input type="number" id="ohmU" placeholder="Tension U (V)" step="any">
+          <input type="number" id="ohmR" placeholder="Résistance R (Ω)" step="any">
+          <input type="number" id="ohmI" placeholder="Courant I (A)" step="any">
+        </div>
+        <div class="res-box" id="ohmResult">Entre deux valeurs puis clique sur Calculer.</div>
+        <button type="button" id="calcOhmBtn">Calculer</button>
+      </div>
+
+      <div class="card">
+        <h3>🔋 Décodeur Condensateur SMD / Céramique</h3>
+        <div class="row">
+          <input type="text" id="smdCode" placeholder="Code ex: 104, 472, 223" maxlength="4">
+          <button type="button" id="calcSmdBtn">Décoder</button>
+        </div>
+        <div class="res-box" id="smdResult">104 = 100 000 pF = 100 nF = 0.1 µF</div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="camInput" accept="image/*" style="display:none">
+  <input type="file" id="avatarInput" accept="image/*" style="display:none">
+</div>
+
+<script>
+(function() {
+  var DEFAULT_AVATAR = "data:image/jpeg;base64,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";
+  var STORAGE_KEY = "electroia_groq_key_v3";
+  var STORAGE_CHAT = "electroia_chat_v3";
+  var STORAGE_AVATAR = "electroia_avatar_v3";
+
+  var apiKey = "";
+  var voiceEnabled = true;
+  var pendingImageBase64 = "";
+  var historyList = [];
+  var recognition = null;
+  var isRecording = false;
+  var welcomeSpoken = false;
+
+  var SYSTEM_PROMPT = "Tu es ElectroIA Pro, l'assistant personnel d'ingénierie électronique de Jean Jackie. " +
+    "RÈGLE ABSOLUE : Tu ne connais QUE l'électronique (composants, circuits intégrés, résistances, condensateurs, diodes, transistors, MOSFET, microcontrôleurs Arduino/ESP32, alimentations, mesures au multimètre/oscilloscope, dépannage). " +
+    "Si l'utilisateur pose une question hors électronique, refuse poliment en français avec un mot malgache (ex: Miala tsiny Jean Jackie, électronique ihany no haiko !). " +
+    "STYLE : Commence parfois par Salama Jean Jackie, Tonga soa ou Misaotra. Réponds en français technique clair avec quelques mots malgaches naturels. " +
+    "FORMATAGE VOCAL STRICT : N'utilise JAMAIS de tableaux Markdown avec des barres verticales | ou des lignes de tirets ---, car la synthèse vocale les lit à voix haute. Utilise uniquement des listes à puces simples avec des phrases courtes.";
+
+  function el(id) { return document.getElementById(id); }
+
+  function safeGet(k) {
+    try { return window.localStorage.getItem(k) || ""; } catch (e) { return ""; }
+  }
+  function safeSet(k, v) {
+    try { window.localStorage.setItem(k, v); } catch (e) {}
+  }
+
+  function setStatus(txt) {
+    el("statusBar").textContent = txt;
+  }
+
+  function cleanTextForSpeech(text) {
+    var t = String(text || "");
+    t = t.replace(/https?:\/\/\S+/g, " lien internet ");
+    t = t.replace(/[\|\-\_\=\~\`\#\*\>\[\]\{\}\(\)]/g, " ");
+    t = t.replace(/\s+/g, " ").trim();
+    t = t.replace(/Jean Jackie/gi, "Jean Jacky");
+    return t;
+  }
+
+  function speakText(text) {
+    if (!voiceEnabled || !("speechSynthesis" in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      var cleaned = cleanTextForSpeech(text);
+      if (!cleaned) return;
+      var utter = new SpeechSynthesisUtterance(cleaned);
+      utter.lang = "fr-FR";
+      utter.rate = 1.02;
+      window.speechSynthesis.speak(utter);
+    } catch (e) {}
+  }
+
+  function formatHtml(text) {
+    var safe = String(text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    safe = safe.replace(/\n/g, "<br>");
+    return safe;
+  }
+
+  function downloadTxt(content, filename) {
+    try {
+      var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    } catch (e) {
+      setStatus("Téléchargement impossible sur cette visionneuse.");
+    }
+  }
+
+  function exportPdfWindow(title, bodyText) {
+    try {
+      var w = window.open("", "_blank");
+      if (!w) {
+        downloadTxt(title + "\n\n" + bodyText, "ElectroIA_Jean_Jackie.txt");
+        return;
+      }
+      var safeBody = String(bodyText || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br>");
+      w.document.write(
+        "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>" + title + "</title>" +
+        "<style>body{font-family:Arial,sans-serif;padding:24px;color:#111;line-height:1.5;}h1{color:#0284c7;font-size:18px;border-bottom:2px solid #0284c7;padding-bottom:6px;}.meta{font-size:12px;color:#555;margin-bottom:16px;}</style>" +
+        "</head><body><h1>" + title + "</h1><div class='meta'>Technicien : Jean Jackie — " + new Date().toLocaleString("fr-FR") + "</div><div>" + safeBody + "</div></body></html>"
+      );
+      w.document.close();
+      setTimeout(function() { w.print(); }, 400);
+    } catch (e) {
+      downloadTxt(title + "\n\n" + bodyText, "ElectroIA_Jean_Jackie.txt");
+    }
+  }
+
+  function addMessageToUI(role, text, imgDataUrl, save) {
+    var box = el("messages");
+    var div = document.createElement("div");
+    div.className = "msg " + role;
+
+    if (imgDataUrl) {
+      var im = document.createElement("img");
+      im.className = "preview";
+      im.src = imgDataUrl;
+      div.appendChild(im);
+    }
+
+    var contentDiv = document.createElement("div");
+    contentDiv.innerHTML = formatHtml(text);
+    div.appendChild(contentDiv);
+
+    if (role === "ai") {
+      var actions = document.createElement("div");
+      actions.className = "msg-actions";
+
+      var btnListen = document.createElement("button");
+      btnListen.type = "button";
+      btnListen.textContent = "🔊 Écouter";
+      btnListen.onclick = function() { speakText(text); };
+
+      var btnTxt = document.createElement("button");
+      btnTxt.type = "button";
+      btnTxt.textContent = "💾 .TXT";
+      btnTxt.onclick = function() { downloadTxt("ElectroIA Pro - Jean Jackie\n\n" + text, "Fiche_Composant.txt"); };
+
+      var btnPdf = document.createElement("button");
+      btnPdf.type = "button";
+      btnPdf.textContent = "📄 PDF";
+      btnPdf.onclick = function() { exportPdfWindow("Fiche Technique — ElectroIA Pro", text); };
+
+      actions.appendChild(btnListen);
+      actions.appendChild(btnTxt);
+      actions.appendChild(btnPdf);
+      div.appendChild(actions);
+    }
+
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+
+    if (save) {
+      historyList.push({ role: role, text: text });
+      if (historyList.length > 30) historyList = historyList.slice(-30);
+      safeSet(STORAGE_CHAT, JSON.stringify(historyList));
+    }
+  }
+
+  function updateApiUi() {
+    if (apiKey && apiKey.indexOf("gsk_") === 0) {
+      el("apiBar").classList.add("hidden");
+      el("keyToggleBtn").textContent = "🔑 Clé OK";
+      el("keyToggleBtn").classList.remove("warn");
+      el("keyToggleBtn").classList.add("ok");
+    } else {
+      el("apiBar").classList.remove("hidden");
+      el("keyToggleBtn").textContent = "🔑 Clé API";
+      el("keyToggleBtn").classList.remove("ok");
+      el("keyToggleBtn").classList.add("warn");
+    }
+  }
+
+  function resizeImageFile(file, callback) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() {
+        var maxSide = 800;
+        var w = img.width;
+        var h = img.height;
+        if (w > maxSide || h > maxSide) {
+          if (w > h) { h = Math.round(h * maxSide / w); w = maxSide; }
+          else { w = Math.round(w * maxSide / h); h = maxSide; }
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function callGroqWithFallback(models, messagesPayload, idx, onSuccess, onError) {
+    if (idx >= models.length) {
+      onError("Aucun modèle Groq disponible.");
+      return;
+    }
+    var model = models[idx];
+    setStatus("Analyse rapide (" + model.split("/").pop() + ")...");
+
+    fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: messagesPayload,
+        temperature: 0.3,
+        max_tokens: 900
+      })
+    })
+    .then(function(res) {
+      return res.json().then(function(data) {
+        return { ok: res.ok, data: data };
+      });
+    })
+    .then(function(result) {
+      if (result.ok && result.data && result.data.choices && result.data.choices[0]) {
+        onSuccess(result.data.choices[0].message.content);
+      } else {
+        var errMsg = (result.data && result.data.error && result.data.error.message) ? result.data.error.message : "Erreur API Groq";
+        if (idx + 1 < models.length) {
+          callGroqWithFallback(models, messagesPayload, idx + 1, onSuccess, onError);
+        } else {
+          onError(errMsg);
+        }
+      }
+    })
+    .catch(function(err) {
+      if (idx + 1 < models.length) {
+        callGroqWithFallback(models, messagesPayload, idx + 1, onSuccess, onError);
+      } else {
+        onError("Erreur réseau : " + err.message);
+      }
+    });
+  }
+
+  function sendMessage() {
+    var input = el("userInput");
+    var q = input.value.trim();
+    var imgData = pendingImageBase64;
+
+    if (!q && !imgData) return;
+    if (!apiKey) {
+      el("apiBar").classList.remove("hidden");
+      setStatus("Colle d'abord ta clé API Groq en haut.");
+      return;
+    }
+
+    if (!q && imgData) {
+      q = "Identifie ce composant électronique sur la photo : référence, rôle, brochage et comment le tester.";
+    }
+
+    addMessageToUI("user", q, imgData, true);
+    input.value = "";
+    pendingImageBase64 = "";
+    el("pendingImgBar").classList.remove("show");
+
+    var messagesPayload = [{ role: "system", content: SYSTEM_PROMPT }];
+    var modelsToTry = [];
+
+    if (imgData) {
+      modelsToTry = [
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "qwen/qwen3.8-27b"
+      ];
+      messagesPayload.push({
+        role: "user",
+        content: [
+          { type: "text", text: q },
+          { type: "image_url", image_url: { url: imgData } }
+        ]
+      });
+    } else {
+      modelsToTry = [
+        "llama-3.3-70b-versatile",
+        "openai/gpt-oss-120b",
+        "llama-3.1-8b-instant"
+      ];
+      var recent = historyList.slice(-6);
+      for (var i = 0; i < recent.length; i++) {
+        messagesPayload.push({
+          role: recent[i].role === "ai" ? "assistant" : "user",
+          content: recent[i].text
+        });
+      }
+    }
+
+    callGroqWithFallback(
+      modelsToTry,
+      messagesPayload,
+      0,
+      function(reply) {
+        setStatus("Prêt — Réponse reçue");
+        addMessageToUI("ai", reply, "", true);
+        speakText(reply);
+      },
+      function(errMsg) {
+        setStatus("Erreur : " + errMsg);
+        addMessageToUI("ai", "Erreur Groq : " + errMsg, "", false);
+      }
+    );
+  }
+
+  function initSpeechRecognition() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    recognition = new SR();
+    recognition.lang = "fr-FR";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = function() {
+      isRecording = true;
+      el("micBtn").classList.add("recording");
+      setStatus("🎙️ Parle maintenant, Jean Jackie...");
+    };
+
+    recognition.onresult = function(event) {
+      if (event.results && event.results[0] && event.results[0][0]) {
+        var transcript = event.results[0][0].transcript;
+        el("userInput").value = transcript;
+        setStatus("Reconnu : " + transcript);
+        sendMessage();
+      }
+    };
+
+    recognition.onerror = function(event) {
+      isRecording = false;
+      el("micBtn").classList.remove("recording");
+      setStatus("Micro : " + event.error + " (ouvre dans Google Chrome si bloqué)");
+    };
+
+    recognition.onend = function() {
+      isRecording = false;
+      el("micBtn").classList.remove("recording");
+    };
+  }
+
+  function toggleMic() {
+    if (!recognition) {
+      setStatus("Reconnaissance vocale non supportée sur ce navigateur (utilise Chrome).");
+      return;
+    }
+    if (isRecording) {
+      try { recognition.stop(); } catch (e) {}
+    } else {
+      try {
+        window.speechSynthesis.cancel();
+        recognition.start();
+      } catch (e) {
+        setStatus("Erreur micro : " + e.message);
+      }
+    }
+  }
+
+  function updateResistor() {
+    var d1 = parseInt(el("b1").value, 10);
+    var d2 = parseInt(el("b2").value, 10);
+    var mult = parseFloat(el("b3").value);
+    var tol = el("b4").value;
+    var val = (d1 * 10 + d2) * mult;
+    var disp = "";
+    if (val >= 1000000) disp = (val / 1000000) + " MΩ";
+    else if (val >= 1000) disp = (val / 1000) + " kΩ";
+    else disp = Math.round(val * 100) / 100 + " Ω";
+    el("resResult").textContent = "Valeur : " + disp + " " + tol;
+    return disp + " " + tol;
+  }
+
+  function init() {
+    var savedAvatar = safeGet(STORAGE_AVATAR);
+    el("avatarImg").src = savedAvatar ? savedAvatar : DEFAULT_AVATAR;
+
+    apiKey = safeGet(STORAGE_KEY);
+    if (apiKey) el("apiKeyInput").value = apiKey;
+    updateApiUi();
+
+    var savedChat = safeGet(STORAGE_CHAT);
+    var welcomeText = "Salama Jean Jackie ! Tonga soa sur ElectroIA Pro. Pose-moi ta question sur un composant électronique au micro, par écrit ou en photo.";
+    if (savedChat) {
+      try {
+        historyList = JSON.parse(savedChat) || [];
+        for (var i = 0; i < historyList.length; i++) {
+          addMessageToUI(historyList[i].role, historyList[i].text, "", false);
+        }
+      } catch (e) {
+        historyList = [];
+      }
+    }
+    if (historyList.length === 0) {
+      addMessageToUI("ai", welcomeText, "", true);
+    }
+
+    speakText(welcomeText);
+    document.body.addEventListener("touchstart", function() {
+      if (!welcomeSpoken) {
+        welcomeSpoken = true;
+        speakText(welcomeText);
+      }
+    }, { once: true });
+
+    initSpeechRecognition();
+
+    el("saveKeyBtn").onclick = function() {
+      var val = el("apiKeyInput").value.trim();
+      if (!val) {
+        setStatus("Entre une clé API valide.");
+        return;
+      }
+      apiKey = val;
+      safeSet(STORAGE_KEY, apiKey);
+      updateApiUi();
+      setStatus("Clé API Groq enregistrée et masquée.");
+    };
+
+    el("keyToggleBtn").onclick = function() {
+      el("apiBar").classList.toggle("hidden");
+    };
+
+    el("voiceBtn").onclick = function() {
+      voiceEnabled = !voiceEnabled;
+      if (voiceEnabled) {
+        el("voiceBtn").textContent = "🔊 Voix";
+        el("voiceBtn").classList.add("voice-on");
+        setStatus("Voix activée");
+      } else {
+        el("voiceBtn").textContent = "🔇 Muet";
+        el("voiceBtn").classList.remove("voice-on");
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        setStatus("Voix désactivée");
+      }
+    };
+
+    el("pdfAllBtn").onclick = function() {
+      var fullText = "";
+      for (var i = 0; i < historyList.length; i++) {
+        fullText += (historyList[i].role === "user" ? "JEAN JACKIE : " : "ELECTROIA PRO : ") + historyList[i].text + "\n\n";
+      }
+      exportPdfWindow("Rapport Session — ElectroIA Pro", fullText || welcomeText);
+    };
+
+    el("clearBtn").onclick = function() {
+      historyList = [];
+      safeSet(STORAGE_CHAT, "[]");
+      el("messages").innerHTML = "";
+      addMessageToUI("ai", welcomeText, "", true);
+      setStatus("Conversation réinitialisée.");
+    };
+
+    el("tabChat").onclick = function() {
+      el("tabChat").classList.add("active");
+      el("tabLab").classList.remove("active");
+      el("viewChat").classList.remove("hidden");
+      el("viewLab").classList.add("hidden");
+    };
+
+    el("tabLab").onclick = function() {
+      el("tabLab").classList.add("active");
+      el("tabChat").classList.remove("active");
+      el("viewLab").classList.remove("hidden");
+      el("viewChat").classList.add("hidden");
+    };
+
+    var chips = document.querySelectorAll(".chip");
+    for (var c = 0; c < chips.length; c++) {
+      chips[c].onclick = function() {
+        var p = this.getAttribute("data-prompt");
+        el("userInput").value = p;
+        el("userInput").focus();
+      };
+    }
+
+    el("sendBtn").onclick = sendMessage;
+    el("userInput").onkeydown = function(e) {
+      if (e.key === "Enter") sendMessage();
+    };
+
+    el("micBtn").onclick = toggleMic;
+
+    el("camBtn").onclick = function() {
+      el("camInput").click();
+    };
+    el("camInput").onchange = function(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      resizeImageFile(file, function(dataUrl) {
+        pendingImageBase64 = dataUrl;
+        el("pendingImgPreview").src = dataUrl;
+        el("pendingImgBar").classList.add("show");
+        setStatus("Photo chargée — appuie sur Envoyer ➤");
+      });
+      e.target.value = "";
+    };
+    el("removeImgBtn").onclick = function() {
+      pendingImageBase64 = "";
+      el("pendingImgBar").classList.remove("show");
+    };
+
+    el("avatarWrap").onclick = function() {
+      el("avatarInput").click();
+    };
+    el("avatarInput").onchange = function(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      resizeImageFile(file, function(dataUrl) {
+        el("avatarImg").src = dataUrl;
+        safeSet(STORAGE_AVATAR, dataUrl);
+        setStatus("Photo de profil mise à jour !");
+      });
+      e.target.value = "";
+    };
+
+    el("b1").onchange = updateResistor;
+    el("b2").onchange = updateResistor;
+    el("b3").onchange = updateResistor;
+    el("b4").onchange = updateResistor;
+    el("askResBtn").onclick = function() {
+      var rVal = updateResistor();
+      el("tabChat").click();
+      el("userInput").value = "À quoi sert une résistance de " + rVal + " dans un circuit électronique et quelle puissance choisir ?";
+      sendMessage();
+    };
+
+    el("calcOhmBtn").onclick = function() {
+      var U = parseFloat(el("ohmU").value);
+      var R = parseFloat(el("ohmR").value);
+      var I = parseFloat(el("ohmI").value);
+      if (!isNaN(U) && !isNaN(R) && R > 0) {
+        I = U / R;
+        el("ohmI").value = I.toFixed(4);
+      } else if (!isNaN(U) && !isNaN(I) && I > 0) {
+        R = U / I;
+        el("ohmR").value = R.toFixed(2);
+      } else if (!isNaN(R) && !isNaN(I)) {
+        U = R * I;
+        el("ohmU").value = U.toFixed(2);
+      } else {
+        el("ohmResult").textContent = "Entre au moins 2 valeurs valides.";
+        return;
+      }
+      var P = U * I;
+      el("ohmResult").textContent = "U = " + U.toFixed(2) + " V | R = " + R.toFixed(2) + " Ω | I = " + I.toFixed(4) + " A | P = " + P.toFixed(3) + " W";
+    };
+
+    el("calcSmdBtn").onclick = function() {
+      var code = el("smdCode").value.trim();
+      if (!/^\d{3}$/.test(code)) {
+        el("smdResult").textContent = "Entre un code à 3 chiffres (ex: 104).";
+        return;
+      }
+      var base = parseInt(code.substring(0, 2), 10);
+      var zeros = parseInt(code.charAt(2), 10);
+      var pf = base * Math.pow(10, zeros);
+      var nf = pf / 1000;
+      var uf = nf / 1000;
+      el("smdResult").textContent = code + " = " + pf + " pF = " + nf + " nF = " + uf + " µF";
+    };
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
